@@ -16,6 +16,7 @@ file_list_url = f"{protocol}://{host}/api/v2/projects/{projectId}/files"
 # 0. Try to read Crowdin API token
 apiToken=FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").GetString("API_token")
 if apiToken=="" or apiToken=="Put youre API token here...":
+   FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").SetString("API_token","Put youre API token here...")
    msgbox = QtGui.QMessageBox(QtGui.QMessageBox.Question, u'Crowdin APi token request', """Create API token into Crowdin user settings page.
    
 Insert it to parameter Tools->Edit parameters...->BaseApp->Crowdin->API-token
