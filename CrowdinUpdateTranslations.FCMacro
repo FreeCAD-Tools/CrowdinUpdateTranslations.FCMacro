@@ -1,0 +1,117 @@
+#! python
+# -*- coding: utf-8 -*-
+# (c) 2021 <Evgeniy>
+
+from urllib import request
+from multiprocessing.dummy import Pool as ThreadPool
+import json, requests, os, subprocess
+from PySide import QtCore, QtGui
+
+protocol="https"			
+host="crowdin.com"
+projectId=str(286)		# ID of FreeCAD project
+apiToken=""	# <-- Crowdin API token here
+file_list_url = f"{protocol}://{host}/api/v2/projects/{projectId}/files"
+
+# 0. Try to read Crowdin API token
+apiToken=FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").GetString("API_token")
+if apiToken=="" or apiToken=="Put youre API token here...":
+   msgbox = QtGui.QMessageBox(QtGui.QMessageBox.Question, u'Crowdin APi token request', """Create API token into Crowdin user settings page.
+   
+Insert it to parameter Tools->Edit parameters...->BaseApp->Crowdin->API-token
+   
+And restart this script""")
+   msgbox.exec_()
+   exit(-1)
+
+# 1. Get path to $USER/AppData/Roaming/FreeCAD/ folder
+path = App.getUserAppDataDir()
+trans_path = os.path.join(path,"translations")
+ts_last_path = os.path.join(path,"ts_last")
+# Create translation and FreeCAD_zip folder if it not exists
+os.makedirs(trans_path, exist_ok = True)
+os.makedirs(ts_last_path, exist_ok = True)
+
+# 2. Check lrealase.exe utility in folder
+lrel_path = os.path.join(path,"lrelase.exe")
+if not os.path.exists(trans_path.replace("translations","lrelease.exe")):
+   print(lrel_path+" is not found... process stopped")
+   print("please copy lrelease.exe utilty to folder: "+trans_path.replace("translations","")+" and try again!")
+   sys.exit(-1)
+
+
+# get locale
+locale = Gui.supportedLocales()[Gui.getLocale()]
+print("Youre locale is: '"+locale+"'")
+
+print("try to get file list from: "+file_list_url)
+FreeCADGui.updateGui()
+FreeCADGui.updateGui()
+body ={}
+headers = {'content-type': 'application/json',
+'Authorization': f"Bearer {apiToken}"}
+req = requests.get(file_list_url, data=json.dumps(body), headers=headers)
+json_obj = json.loads(req.text)
+
+def download(file):
+   global protocol,host,projectId,apiToken,locale,path,ts_last_path
+   fileId,fileName = file
+   try:
+      get_link_url = f"{protocol}://{host}/api/v2/projects/{projectId}/translations/builds/files/{fileId}"
+      headers = {'content-type': 'application/json',
+      'Authorization': f"Bearer {apiToken}"}
+      body = {"targetLanguageId":locale}
+      data = str(json.dumps(body)).encode()
+      Gui.updateGui()
+      req = request.Request(get_link_url, data=data, headers=headers)
+      Gui.updateGui()
+      resp = request.urlopen(req) 
+      data = resp.read().decode()
+      tmp_json_obj = json.loads(data)
+      temp_url=tmp_json_obj["data"]["url"]
+      os.chdir(ts_last_path)
+      if os.path.exists(fileName):
+         os.remove(fileName)
+      request.urlretrieve(temp_url, fileName)
+      if os.path.exists(fileName):
+         print(fileName+" id="+fileId+" download complete!")
+         ts_path = os.path.join(ts_last_path,fileName)
+         print(ts_path)
+         subprocess.call("lrelease "+ts_path, shell=True, cwd=path)
+         qm_file_path=ts_path.replace(".ts",".qm")
+         if not os.path.exists(qm_file_path):
+            print("ERROR: of creation " + qm_file_path + " file, it does not exist, aborting")
+         else:
+            # Rename and move file
+            qm_file_name=fileName.replace(".ts","_"+locale+".qm")
+            qm_new_path=os.path.join(trans_path,qm_file_name)
+            if os.path.exists(qm_new_path):
+               os.remove(qm_new_path) 
+            os.rename(qm_file_path,qm_new_path)
+            FreeCADGui.updateGui()
+      else:   
+         print(fileName+" id="+fileId+" download error!")
+      Gui.updateGui()
+      #response = requests.get(temp_url)
+   except:
+      pass
+
+files=[]
+for dat in json_obj["data"]:
+   fileId=str(dat["data"]["id"])
+   fileName=dat["data"]["name"]
+   #print(fileName+" id="+fileId)
+   files.append((fileId,fileName))
+#print(files)   
+
+
+# Create thread pool and run download
+print("download and convert all")
+FreeCADGui.updateGui()
+FreeCADGui.updateGui()
+pool = ThreadPool(20)
+results = pool.map(download, files)
+
+pool.close()
+pool.join()
+print("Restart FreeCAD for update interface translations")
