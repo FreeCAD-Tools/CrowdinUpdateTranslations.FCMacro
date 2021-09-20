@@ -9,8 +9,8 @@ from PySide import QtCore, QtGui
 
 protocol="https"			
 host="crowdin.com"
-projectId=str(286)		# ID of FreeCAD project
-apiToken=""	# <-- Crowdin API token here
+projectId=str(286)   # ID of FreeCAD project
+apiToken=""          # <-- Crowdin API token here
 
 # 0. Try to read Crowdin API token
 apiToken=FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").GetString("API_token")
@@ -66,7 +66,7 @@ def download(file):
          subprocess.call("lrelease "+ts_path, shell=True, cwd=path)
          qm_file_path=ts_path.replace(".ts",".qm")
          if not os.path.exists(qm_file_path):
-            print("ERROR: of creation " + qm_file_path + " file, it does not exist, aborting")
+            print("ERROR: of creation " + qm_file_path + " file, it does not exist")
          else:
             # Rename and move file
             qm_file_name=fileName.replace(".ts","_"+locale+".qm")
@@ -108,8 +108,6 @@ for dat in json_obj["data"]:
       files.append((fileId,fileName))
 
 #print(files)
-
-print(files)   
 
 # Create thread pool and run download
 print("download and convert all")
