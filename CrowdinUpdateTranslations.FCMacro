@@ -102,7 +102,11 @@ for dat in json_obj["data"]:
    fileId=str(dat["data"]["id"])
    fileName=dat["data"]["name"]
    #print(fileName+" id="+fileId)
-   files.append((fileId,fileName))
+   # Append only *.ts ignore *.po and *.tbx
+   if ".ts" in fileName:
+      files.append((fileId,fileName))
+
+#print(files)
 
 print(files)   
 
