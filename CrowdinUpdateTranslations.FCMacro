@@ -4,7 +4,7 @@
 
 from urllib import request
 from multiprocessing.dummy import Pool as ThreadPool
-import json, requests, os, subprocess
+import json, os, subprocess
 from PySide import QtCore, QtGui
 
 protocol="https"			
@@ -89,13 +89,14 @@ print("Youre locale is: '"+locale+"'")
 FreeCADGui.updateGui()
 FreeCADGui.updateGui()
 queryParameters = "?limit=250"
-file_list_url = f"{protocol}://{host}/api/v2/projects/{projectId}/files{queryParameters}"
-body ={}
+get_file_list_url = f"{protocol}://{host}/api/v2/projects/{projectId}/files{queryParameters}"
 headers = {'content-type': 'application/json',
 'Authorization': f"Bearer {apiToken}"}
-print("try to get file list from: "+file_list_url)
-req = requests.get(file_list_url, data=json.dumps(body), headers=headers)
-json_obj = json.loads(req.text)
+print("try to get file list from: "+get_file_list_url)
+req = request.Request(get_file_list_url, headers=headers)
+resp = request.urlopen(req)
+data = resp.read().decode()
+json_obj = json.loads(data)
 
 files=[]
 for dat in json_obj["data"]:
