@@ -82,12 +82,13 @@ def download(file):
    except:
       pass
 
-# get locale
+# 3. Get locale. Store it and print.
 locale = Gui.supportedLocales()[Gui.getLocale()]
 print("Youre locale is: '"+locale+"'")
+FreeCADGui.updateGui()
+FreeCADGui.updateGui()
 
-FreeCADGui.updateGui()
-FreeCADGui.updateGui()
+# 4. Get list of files from Crowdin
 queryParameters = "?limit=250"
 get_file_list_url = f"{protocol}://{host}/api/v2/projects/{projectId}/files{queryParameters}"
 headers = {'content-type': 'application/json',
@@ -98,6 +99,7 @@ resp = request.urlopen(req)
 data = resp.read().decode()
 json_obj = json.loads(data)
 
+# 5. Extract list of files from JSON object 
 files=[]
 for dat in json_obj["data"]:
    fileId=str(dat["data"]["id"])
@@ -109,14 +111,25 @@ for dat in json_obj["data"]:
 
 #print(files)
 
-# Create thread pool and run download
+# 6. Create thread pool and run download
 print("download and convert all")
 FreeCADGui.updateGui()
 FreeCADGui.updateGui()
 pool = ThreadPool(20)
 results = pool.map(download, files)
-
+# Close pool
 pool.close()
 pool.join()
-print("Restart FreeCAD for update interface translations")
+
+# 7. Try to apply changes
+print("Apply changes.")
+# Set other langage, for example English
+Gui.setLocale('en')
+FreeCADGui.updateGui()
+FreeCADGui.updateGui()
+# And restore default language
+Gui.setLocale(locale)
+FreeCADGui.updateGui()
+FreeCADGui.updateGui()
+print("If some of the translations have not been updated, restart FreeCAD.")
 
