@@ -13,7 +13,7 @@ projectId=str(286)   # ID of FreeCAD project
 apiToken=""          # <-- Crowdin API token here
 
 # 0. Try to read Crowdin API token
-apiToken=FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").GetString("API_token")
+apiToken=FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").GetString("API_token").strip()
 if apiToken=="" or apiToken=="Put youre API token here...":
    FreeCAD.ParamGet("User parameter:BaseApp/Crowdin").SetString("API_token","Put youre API token here...")
    msgbox = QtGui.QMessageBox(QtGui.QMessageBox.Question, u'Crowdin APi token request', """Create API token into Crowdin user settings page.
